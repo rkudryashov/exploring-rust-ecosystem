@@ -1,4 +1,5 @@
 [workspace]
 members = [
     "solar-system-info/rpc",
+    "solar-system-info/server",
 ]
