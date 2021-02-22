@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package solar_system_info;
+
+import "google/protobuf/timestamp.proto";
+
+service SolarSystemInfo {
+  rpc GetPlanet (PlanetRequest) returns (PlanetResponse);
+  rpc GetPlanets (PlanetsRequest) returns (stream PlanetResponse);
+}
+
+message PlanetsRequest {}
+
+message PlanetRequest {
+  string name = 1;
+}
+
+message PlanetResponse {
+  Planet planet = 1;
+}
+
+message Planet {
+  uint64 id = 1;
+  string name = 2;
+  Type type = 3;
+  float meanRadius = 4;
+  float mass = 5;
+  repeated Satellite satellites = 6;
+  bytes image = 7;
+}
+
+enum Type {
+  TERRESTRIAL_PLANET = 0;
+  GAS_GIANT = 1;
+  ICE_GIANT = 2;
+  DWARF_PLANET = 3;
+}
+
+message Satellite {
+  uint64 id = 1;
+  string name = 2;
+  google.protobuf.Timestamp first_spacecraft_landing_date = 3;
+}
