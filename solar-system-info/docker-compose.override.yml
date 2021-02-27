@@ -1,0 +1,18 @@
+# development configuration
+version: '3.8'
+services:
+
+  solar-system-info-bot:
+    build:
+      context: ..
+      dockerfile: ./solar-system-info/bot/Dockerfile
+
+  solar-system-info-server:
+    build:
+      context: ..
+      dockerfile: ./solar-system-info/server/Dockerfile
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile

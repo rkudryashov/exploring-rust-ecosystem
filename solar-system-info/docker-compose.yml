@@ -1,0 +1,47 @@
+version: '3.8'
+services:
+
+  solar-system-info-server:
+    image: kudryashovroman/solar-system-info:server
+    container_name: solar-system-info-server
+    restart: always
+    depends_on:
+      - solar-system-info-db
+    environment:
+      GRPC_SERVER_ADDRESS: 0.0.0.0:$GRPC_SERVER_PORT
+      DATABASE_URL: postgres://postgres:$DB_PASSWORD@solar-system-info-db/solar_system_info
+      RUST_LOG: debug
+    ports:
+      - $GRPC_SERVER_PORT:$GRPC_SERVER_PORT
+
+  solar-system-info-db:
+    image: postgres:13.2-alpine
+    container_name: solar-system-info-db
+    restart: always
+    environment:
+      POSTGRES_DB: solar_system_info
+      POSTGRES_PASSWORD: $DB_PASSWORD
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 1m
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  solar-system-info-bot:
+    image: kudryashovroman/solar-system-info:bot
+    container_name: solar-system-info-bot
+    restart: always
+    depends_on:
+      - solar-system-info-server
+      - nginx
+    environment:
+      TELEGRAM_API_URL: $TELEGRAM_API_URL
+      GRPC_SERVER_ADDRESS: http://solar-system-info-server:$GRPC_SERVER_PORT
+      TELOXIDE_TOKEN: $TELOXIDE_TOKEN
+      RUST_LOG: debug
+
+  nginx:
+    image: kudryashovroman/solar-system-info:nginx
+    container_name: nginx
+    restart: always

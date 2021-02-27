@@ -1,0 +1,83 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  solar-system-info-server-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/build-push-action@v1.1.2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: kudryashovroman/solar-system-info
+          path: .
+          dockerfile: ./solar-system-info/server/Dockerfile
+          tags: server
+          push: ${{ github.event_name == 'push' }}
+
+  solar-system-info-bot-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/build-push-action@v1.1.2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: kudryashovroman/solar-system-info
+          path: .
+          dockerfile: ./solar-system-info/bot/Dockerfile
+          tags: bot
+          push: ${{ github.event_name == 'push' }}
+
+  nginx-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/build-push-action@v1.1.2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: kudryashovroman/solar-system-info
+          path: ./solar-system-info/nginx
+          dockerfile: ./solar-system-info/nginx/Dockerfile
+          tags: nginx
+          push: ${{ github.event_name == 'push' }}
+
+  deploy:
+    if: ${{ github.event_name == 'push' }}
+    needs: [ solar-system-info-server-image, solar-system-info-bot-image, nginx-image ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup gcloud CLI
+        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        with:
+          version: '319.0.0'
+          service_account_key: ${{ secrets.GCE_SA_KEY }}
+          project_id: ${{ secrets.GCE_PROJECT }}
+
+      - run: |
+          sed -i 's/<paste_token_of_your_bot_here>/${{ secrets.TELOXIDE_TOKEN }}/g' ./solar-system-info/.env
+
+      - run: |-
+          gcloud config set compute/zone ${{ secrets.GCE_INSTANCE_ZONE }}
+
+      - run: |-
+          gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'mkdir -p ~/solar-system-info'
+
+      - run: |-
+          gcloud compute scp --quiet ./solar-system-info/docker-compose.yml ./solar-system-info/.env ./.github/deploy.sh ${{ secrets.GCE_INSTANCE }}:~/solar-system-info/
+
+      - run: |-
+          gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'bash ~/solar-system-info/deploy.sh'

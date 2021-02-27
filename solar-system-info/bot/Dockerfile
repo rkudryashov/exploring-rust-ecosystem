@@ -1,0 +1,15 @@
+FROM rust:1.51
+
+ENV CARGO_TERM_COLOR always
+RUN rustup component add rustfmt
+
+WORKDIR /usr/src/app/docker-build
+COPY /Cargo.lock ./
+COPY /solar-system-info/bot/ ./
+COPY /solar-system-info/rpc ../rpc
+RUN cargo install --path . --locked
+
+FROM debian:buster-slim
+RUN apt-get update && apt-get install -y openssl
+COPY --from=0 /usr/local/cargo/bin/solar-system-info-bot /usr/local/bin/solar-system-info-bot
+CMD ["solar-system-info-bot"]

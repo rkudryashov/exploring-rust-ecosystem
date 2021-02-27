@@ -1,0 +1,4 @@
+/target
+
+/solar-system-info/*/Dockerfile
+/solar-system-info/*/.env
