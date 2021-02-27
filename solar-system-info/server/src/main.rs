@@ -15,7 +15,7 @@ use tokio::sync::mpsc;
 use tokio_stream::StreamExt;
 use tonic::{Request, Response, Status, transport::Server};
 
-use solar_system_info_rpc::solar_system_info::{Planet, PlanetRequest, PlanetResponse, PlanetsRequest};
+use solar_system_info_rpc::solar_system_info::{Planet, PlanetRequest, PlanetResponse, PlanetsListResponse};
 use solar_system_info_rpc::solar_system_info::solar_system_info_server::{SolarSystemInfo, SolarSystemInfoServer};
 
 use crate::conversion::PlanetWrapper;
@@ -60,7 +60,20 @@ impl SolarSystemInfo for SolarSystemInfoService {
 
     type GetPlanetsStream = Pin<Box<dyn Stream<Item=Result<PlanetResponse, Status>> + Send + Sync + 'static>>;
 
-    async fn get_planets(&self, request: Request<PlanetsRequest>) -> Result<Response<Self::GetPlanetsStream>, Status> {
+    async fn get_planets_list(&self, request: Request<()>) -> Result<Response<PlanetsListResponse>, Status> {
+        debug!("Got a request: {:?}", request);
+
+        let names_of_planets = persistence::repository::get_names(&get_connection(&self.pool))
+            .expect("Can't get names of the planets");
+
+        let reply = PlanetsListResponse {
+            list: names_of_planets
+        };
+
+        Ok(Response::new(reply))
+    }
+
+    async fn get_planets(&self, request: Request<()>) -> Result<Response<Self::GetPlanetsStream>, Status> {
         debug!("Got a request: {:?}", request);
 
         let (tx, rx) = mpsc::channel(4);

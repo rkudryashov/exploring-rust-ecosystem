@@ -3,13 +3,17 @@ syntax = "proto3";
 package solar_system_info;
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 service SolarSystemInfo {
+  rpc GetPlanetsList (google.protobuf.Empty) returns (PlanetsListResponse);
   rpc GetPlanet (PlanetRequest) returns (PlanetResponse);
-  rpc GetPlanets (PlanetsRequest) returns (stream PlanetResponse);
+  rpc GetPlanets (google.protobuf.Empty) returns (stream PlanetResponse);
 }
 
-message PlanetsRequest {}
+message PlanetsListResponse{
+  repeated string list = 1;
+}
 
 message PlanetRequest {
   string name = 1;

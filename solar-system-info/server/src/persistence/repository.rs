@@ -4,6 +4,14 @@ use crate::Conn;
 use crate::persistence::model::{PlanetEntity, SatelliteEntity};
 use crate::persistence::schema::planets;
 
+pub fn get_names(conn: &Conn) -> QueryResult<Vec<String>> {
+    Ok(
+        planets::table
+            .select(planets::name)
+            .load(conn)?
+    )
+}
+
 pub fn get_all(conn: &Conn) -> QueryResult<Vec<(PlanetEntity, Vec<SatelliteEntity>)>> {
     let planets: Vec<PlanetEntity> = planets::table.load(conn)?;
     let satellites = SatelliteEntity::belonging_to(&planets)
