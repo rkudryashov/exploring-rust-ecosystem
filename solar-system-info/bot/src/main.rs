@@ -65,7 +65,7 @@ async fn answer(
                 None => String::new()
             };
 
-            ctx.answer(get_start_message(&username)?).await?;
+            ctx.answer(get_start_message(&username)).await?;
             ctx.answer(Command::descriptions()).await?;
         }
         Command::Help => {
@@ -87,13 +87,11 @@ async fn answer(
     Ok(())
 }
 
-fn get_start_message(username: &str) -> Result<String, SolarSystemInfoBotError> {
-    Ok(
-        formatdoc!(
+fn get_start_message(username: &str) -> String {
+    formatdoc!(
             "Hi {username}, this bot can show basic information about planets in the Solar System",
             username = &username
         )
-    )
 }
 
 async fn get_planets_list(mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>) -> Result<String, SolarSystemInfoBotError> {
@@ -136,7 +134,7 @@ async fn get_planets(mut grpc_client: SolarSystemInfoClient<tonic::transport::Ch
                     }
                     None => {
                         log::error!("Something went wrong while handling planets");
-                        return Err(SolarSystemInfoBotError::new(format!("Something went wrong while handling planets").as_str()));
+                        return Err(SolarSystemInfoBotError::new("Something went wrong while handling planets"));
                     }
                 }
             }

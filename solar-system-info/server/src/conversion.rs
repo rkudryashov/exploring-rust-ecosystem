@@ -11,9 +11,9 @@ pub struct PlanetWrapper {
     pub(crate) satellites: Vec<SatelliteEntity>,
 }
 
-impl Into<GrpcPlanet> for PlanetWrapper {
-    fn into(self) -> GrpcPlanet {
-        let planet = self.planet;
+impl From<PlanetWrapper> for GrpcPlanet {
+    fn from(pw: PlanetWrapper) -> GrpcPlanet {
+        let planet = pw.planet;
         let planet_type: GrpcType = convert_string_to_planet_type(&planet.type_);
 
         let filename = format!("{}.jpg", planet.name.to_lowercase());
@@ -25,7 +25,7 @@ impl Into<GrpcPlanet> for PlanetWrapper {
             r#type: planet_type.into(),
             mean_radius: planet.mean_radius.to_f32().expect("Can't convert to f32"),
             mass: planet.mass.to_f32().expect("Can't convert mass"),
-            satellites: self.satellites.into_iter()
+            satellites: pw.satellites.into_iter()
                 .map(|s| s.into())
                 .collect(),
             image: image.to_vec(),
@@ -33,17 +33,17 @@ impl Into<GrpcPlanet> for PlanetWrapper {
     }
 }
 
-impl Into<GrpcSatellite> for SatelliteEntity {
-    fn into(self) -> GrpcSatellite {
-        let first_spacecraft_landing_date: Option<::prost_types::Timestamp> = self.first_spacecraft_landing_date.map(|d| {
+impl From<SatelliteEntity> for GrpcSatellite {
+    fn from(entity: SatelliteEntity) -> Self {
+        let first_spacecraft_landing_date: Option<::prost_types::Timestamp> = entity.first_spacecraft_landing_date.map(|d| {
             ::prost_types::Timestamp {
                 seconds: d.and_time(NaiveTime::from_hms(0, 0, 0)).timestamp(),
                 nanos: 0,
             }
         });
         GrpcSatellite {
-            id: self.id as u64,
-            name: self.name,
+            id: entity.id as u64,
+            name: entity.name,
             first_spacecraft_landing_date,
         }
     }

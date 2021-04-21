@@ -27,7 +27,7 @@ impl fmt::Display for PlanetWrapper<'_> {
             mass = mass,
         )?;
 
-        if planet.satellites.len() > 0 {
+        if !planet.satellites.is_empty() {
             writedoc!(f, "<b>satellites:</b>\n")?;
             for satellite in &planet.satellites {
                 writedoc!(f, "    {satellite}", satellite = SatelliteWrapper(satellite))?;

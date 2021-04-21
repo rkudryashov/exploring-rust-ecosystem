@@ -5,11 +5,10 @@ use crate::persistence::model::{PlanetEntity, SatelliteEntity};
 use crate::persistence::schema::planets;
 
 pub fn get_names(conn: &Conn) -> QueryResult<Vec<String>> {
-    Ok(
-        planets::table
-            .select(planets::name)
-            .load(conn)?
-    )
+    let names = planets::table
+        .select(planets::name)
+        .load(conn)?;
+    Ok(names)
 }
 
 pub fn get_all(conn: &Conn) -> QueryResult<Vec<(PlanetEntity, Vec<SatelliteEntity>)>> {
