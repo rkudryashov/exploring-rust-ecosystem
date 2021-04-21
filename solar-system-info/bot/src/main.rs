@@ -7,13 +7,13 @@ use dotenv::dotenv;
 use indoc::formatdoc;
 use lazy_static::lazy_static;
 use reqwest::Url;
-use teloxide::{prelude::*, utils::command::BotCommand};
 use teloxide::adaptors::DefaultParseMode;
 use teloxide::types::InputFile;
 use teloxide::types::ParseMode::Html;
+use teloxide::{prelude::*, utils::command::BotCommand};
 
-use solar_system_info_rpc::solar_system_info::PlanetRequest;
 use solar_system_info_rpc::solar_system_info::solar_system_info_client::SolarSystemInfoClient;
+use solar_system_info_rpc::solar_system_info::PlanetRequest;
 
 use crate::conversion::PlanetWrapper;
 use crate::error::SolarSystemInfoBotError;
@@ -22,7 +22,8 @@ mod conversion;
 mod error;
 
 lazy_static! {
-    static ref GRPC_SERVER_ADDRESS: String = std::env::var("GRPC_SERVER_ADDRESS").expect("Can't read gRPC server address");
+    static ref GRPC_SERVER_ADDRESS: String =
+        std::env::var("GRPC_SERVER_ADDRESS").expect("Can't read gRPC server address");
 }
 
 #[tokio::main]
@@ -44,11 +45,10 @@ async fn main() {
 
     let grpc_client = create_grpc_client().await;
 
-    teloxide::commands_repl(
-        bot,
-        "solar-system-info-bot",
-        move |cx, command| answer(cx, command, grpc_client.clone()),
-    ).await;
+    teloxide::commands_repl(bot, "solar-system-info-bot", move |cx, command| {
+        answer(cx, command, grpc_client.clone())
+    })
+    .await;
 }
 
 type UpdateCtx = UpdateWithCx<Arc<AutoSend<DefaultParseMode<Bot>>>, Message>;
@@ -62,7 +62,7 @@ async fn answer(
         Command::Start => {
             let username: String = match ctx.update.from() {
                 Some(user) => user.username.clone().unwrap_or_default(),
-                None => String::new()
+                None => String::new(),
             };
 
             ctx.answer(get_start_message(&username)).await?;
@@ -89,33 +89,47 @@ async fn answer(
 
 fn get_start_message(username: &str) -> String {
     formatdoc!(
-            "Hi {username}, this bot can show basic information about planets in the Solar System",
-            username = &username
-        )
+        "Hi {username}, this bot can show basic information about planets in the Solar System",
+        username = &username
+    )
 }
 
-async fn get_planets_list(mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>) -> Result<String, SolarSystemInfoBotError> {
-    let response = grpc_client.get_planets_list(tonic::Request::new(()))
-        .await;
+async fn get_planets_list(
+    mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>,
+) -> Result<String, SolarSystemInfoBotError> {
+    let response = grpc_client.get_planets_list(tonic::Request::new(())).await;
 
     return match response {
         Ok(response) => {
-            let message = response.into_inner().list.into_iter()
-                .map(|planet_name| format!("{} (use <code>/planet {}</code>)", planet_name, planet_name.to_lowercase()))
+            let message = response
+                .into_inner()
+                .list
+                .into_iter()
+                .map(|planet_name| {
+                    format!(
+                        "{} (use <code>/planet {}</code>)",
+                        planet_name,
+                        planet_name.to_lowercase()
+                    )
+                })
                 .collect::<Vec<String>>()
                 .join("\n");
             Ok(message)
         }
         Err(e) => {
             log::error!("There was an error while handling list of planets: {}", e);
-            Err(SolarSystemInfoBotError::new("Internal error while handling list of planets"))
+            Err(SolarSystemInfoBotError::new(
+                "Internal error while handling list of planets",
+            ))
         }
     };
 }
 
-async fn get_planets(mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>, ctx: UpdateCtx) -> Result<(), SolarSystemInfoBotError> {
-    let response = grpc_client.get_planets(tonic::Request::new(()))
-        .await;
+async fn get_planets(
+    mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>,
+    ctx: UpdateCtx,
+) -> Result<(), SolarSystemInfoBotError> {
+    let response = grpc_client.get_planets(tonic::Request::new(())).await;
 
     match response {
         Ok(response) => {
@@ -134,48 +148,67 @@ async fn get_planets(mut grpc_client: SolarSystemInfoClient<tonic::transport::Ch
                     }
                     None => {
                         log::error!("Something went wrong while handling planets");
-                        return Err(SolarSystemInfoBotError::new("Something went wrong while handling planets"));
+                        return Err(SolarSystemInfoBotError::new(
+                            "Something went wrong while handling planets",
+                        ));
                     }
                 }
             }
         }
         Err(e) => {
             log::error!("There was an error while handling planets: {}", e);
-            return Err(SolarSystemInfoBotError::new("Internal error while handling planets"));
+            return Err(SolarSystemInfoBotError::new(
+                "Internal error while handling planets",
+            ));
         }
     };
 
     Ok(())
 }
 
-async fn get_planet(mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>, planet_name: String) -> Result<(InputFile, String), SolarSystemInfoBotError> {
-    let request = tonic::Request::new(PlanetRequest { name: planet_name.to_string() });
-    let response = grpc_client.get_planet(request)
-        .await;
+async fn get_planet(
+    mut grpc_client: SolarSystemInfoClient<tonic::transport::Channel>,
+    planet_name: String,
+) -> Result<(InputFile, String), SolarSystemInfoBotError> {
+    let request = tonic::Request::new(PlanetRequest {
+        name: planet_name.to_string(),
+    });
+    let response = grpc_client.get_planet(request).await;
 
     return match response {
-        Ok(response) => {
-            match response.into_inner().planet {
-                Some(planet) => {
-                    let pw = PlanetWrapper(&planet);
-                    let file = InputFile::Memory {
-                        file_name: format!("{}.png", &planet_name),
-                        data: Cow::from(planet.image.clone()),
-                    };
+        Ok(response) => match response.into_inner().planet {
+            Some(planet) => {
+                let pw = PlanetWrapper(&planet);
+                let file = InputFile::Memory {
+                    file_name: format!("{}.png", &planet_name),
+                    data: Cow::from(planet.image.clone()),
+                };
 
-                    Ok((file, pw.to_string()))
-                }
-                None => {
-                    log::error!("Something went wrong while handling a planet {}", &planet_name);
-                    Err(SolarSystemInfoBotError::new(format!("Something went wrong while handling a planet {}", planet_name).as_str()))
-                }
+                Ok((file, pw.to_string()))
             }
-        }
+            None => {
+                log::error!(
+                    "Something went wrong while handling a planet {}",
+                    &planet_name
+                );
+                Err(SolarSystemInfoBotError::new(
+                    format!(
+                        "Something went wrong while handling a planet {}",
+                        planet_name
+                    )
+                    .as_str(),
+                ))
+            }
+        },
         Err(status) => {
             log::error!("There was an error while handling a planet: {}", status);
             match status.code() {
-                tonic::Code::NotFound => Err(SolarSystemInfoBotError::new(format!("Planet with name {} not found", planet_name).as_str())),
-                _ => Err(SolarSystemInfoBotError::new(format!("Internal error while handling a planet {}", planet_name).as_str()))
+                tonic::Code::NotFound => Err(SolarSystemInfoBotError::new(
+                    format!("Planet with name {} not found", planet_name).as_str(),
+                )),
+                _ => Err(SolarSystemInfoBotError::new(
+                    format!("Internal error while handling a planet {}", planet_name).as_str(),
+                )),
             }
         }
     };
@@ -191,7 +224,9 @@ enum Command {
     List,
     #[command(description = "shows info about all planets")]
     Planets,
-    #[command(description = "show info about specified planet (for example, enter <code>/planet neptune</code>)")]
+    #[command(
+        description = "show info about specified planet (for example, enter <code>/planet neptune</code>)"
+    )]
     Planet(String),
 }
 

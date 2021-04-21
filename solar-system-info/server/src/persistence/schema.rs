@@ -20,7 +20,4 @@ table! {
 
 joinable!(satellites -> planets (planet_id));
 
-allow_tables_to_appear_in_same_query!(
-    planets,
-    satellites,
-);
+allow_tables_to_appear_in_same_query!(planets, satellites,);

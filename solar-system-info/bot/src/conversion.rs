@@ -11,7 +11,9 @@ pub struct PlanetWrapper<'a>(pub &'a Planet);
 impl fmt::Display for PlanetWrapper<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let planet = &self.0;
-        let planet_type = convert_planet_type_to_string(Type::from_i32(planet.r#type).expect("Planet type not found"));
+        let planet_type = convert_planet_type_to_string(
+            Type::from_i32(planet.r#type).expect("Planet type not found"),
+        );
         let mass = format!("{:e}", PlanetMassWrapper(planet.mass));
 
         writedoc!(f, "
@@ -30,7 +32,11 @@ impl fmt::Display for PlanetWrapper<'_> {
         if !planet.satellites.is_empty() {
             writedoc!(f, "<b>satellites:</b>\n")?;
             for satellite in &planet.satellites {
-                writedoc!(f, "    {satellite}", satellite = SatelliteWrapper(satellite))?;
+                writedoc!(
+                    f,
+                    "    {satellite}",
+                    satellite = SatelliteWrapper(satellite)
+                )?;
                 writedoc!(f, "\n")?;
             }
         }
@@ -68,6 +74,6 @@ fn convert_planet_type_to_string<'a>(planet_type: Type) -> &'a str {
         Type::TerrestrialPlanet => "Terrestrial planet",
         Type::GasGiant => "Gas giant",
         Type::IceGiant => "Ice giant",
-        Type::DwarfPlanet => "Dwarf planet"
+        Type::DwarfPlanet => "Dwarf planet",
     }
 }

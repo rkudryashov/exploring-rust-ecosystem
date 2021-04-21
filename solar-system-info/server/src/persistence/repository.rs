@@ -1,13 +1,11 @@
 use diesel::prelude::*;
 
-use crate::Conn;
 use crate::persistence::model::{PlanetEntity, SatelliteEntity};
 use crate::persistence::schema::planets;
+use crate::Conn;
 
 pub fn get_names(conn: &Conn) -> QueryResult<Vec<String>> {
-    let names = planets::table
-        .select(planets::name)
-        .load(conn)?;
+    let names = planets::table.select(planets::name).load(conn)?;
     Ok(names)
 }
 
@@ -26,8 +24,7 @@ pub fn get_by_name(name: &str, conn: &Conn) -> QueryResult<(PlanetEntity, Vec<Sa
     let planet: PlanetEntity = planets::table
         .filter(planets::name.ilike(name))
         .first(conn)?;
-    let satellites = SatelliteEntity::belonging_to(&planet)
-        .load(conn)?;
+    let satellites = SatelliteEntity::belonging_to(&planet).load(conn)?;
 
     Ok((planet, satellites))
 }

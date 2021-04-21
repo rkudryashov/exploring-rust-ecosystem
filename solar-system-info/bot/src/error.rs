@@ -3,12 +3,14 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct SolarSystemInfoBotError {
-    message: String
+    message: String,
 }
 
 impl SolarSystemInfoBotError {
     pub fn new(msg: &str) -> SolarSystemInfoBotError {
-        SolarSystemInfoBotError { message: msg.to_string() }
+        SolarSystemInfoBotError {
+            message: msg.to_string(),
+        }
     }
 }
 
