@@ -1,0 +1,12 @@
+= Solar System Info
+
+The project demonstrates:
+
+* implementation of gRPC server and client using https://github.com/hyperium/tonic[tonic]
+* implementation of a Telegram bot using https://github.com/teloxide/teloxide[teloxide]
+
+image:https://romankudryashov.com/blog/2021/04/grpc-rust/images/architecture.png[Architecture,800]
+
+https://romankudryashov.com/blog/2021/04/grpc-rust/[Detailed description]
+
+https://t.me/solarsysteminfobot[Live demo]
