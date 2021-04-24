@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "solar-system-info/rpc",
-    "solar-system-info/server",
-    "solar-system-info/bot",
+    "grpc-telegram-bot/rpc",
+    "grpc-telegram-bot/server",
+    "grpc-telegram-bot/bot",
 ]

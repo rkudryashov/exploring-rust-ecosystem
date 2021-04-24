@@ -5,8 +5,8 @@ RUN rustup component add rustfmt
 
 WORKDIR /usr/src/app/docker-build
 COPY /Cargo.lock ./
-COPY /solar-system-info/bot/ ./
-COPY /solar-system-info/rpc ../rpc
+COPY /grpc-telegram-bot/bot/ ./
+COPY /grpc-telegram-bot/rpc ../rpc
 RUN cargo install --path . --locked
 
 FROM debian:buster-slim

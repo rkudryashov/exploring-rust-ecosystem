@@ -5,12 +5,12 @@ services:
   solar-system-info-bot:
     build:
       context: ..
-      dockerfile: ./solar-system-info/bot/Dockerfile
+      dockerfile: ./grpc-telegram-bot/bot/Dockerfile
 
   solar-system-info-server:
     build:
       context: ..
-      dockerfile: ./solar-system-info/server/Dockerfile
+      dockerfile: ./grpc-telegram-bot/server/Dockerfile
 
   nginx:
     build:

@@ -20,7 +20,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: kudryashovroman/solar-system-info
           path: .
-          dockerfile: ./solar-system-info/server/Dockerfile
+          dockerfile: ./grpc-telegram-bot/server/Dockerfile
           tags: server
           push: ${{ github.event_name == 'push' }}
 
@@ -34,7 +34,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: kudryashovroman/solar-system-info
           path: .
-          dockerfile: ./solar-system-info/bot/Dockerfile
+          dockerfile: ./grpc-telegram-bot/bot/Dockerfile
           tags: bot
           push: ${{ github.event_name == 'push' }}
 
@@ -47,8 +47,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: kudryashovroman/solar-system-info
-          path: ./solar-system-info/nginx
-          dockerfile: ./solar-system-info/nginx/Dockerfile
+          path: ./grpc-telegram-bot/nginx
+          dockerfile: ./grpc-telegram-bot/nginx/Dockerfile
           tags: nginx
           push: ${{ github.event_name == 'push' }}
 
@@ -68,7 +68,7 @@ jobs:
           project_id: ${{ secrets.GCE_PROJECT }}
 
       - run: |
-          sed -i 's/<paste_token_of_your_bot_here>/${{ secrets.TELOXIDE_TOKEN }}/g' ./solar-system-info/.env
+          sed -i 's/<paste_token_of_your_bot_here>/${{ secrets.TELOXIDE_TOKEN }}/g' ./grpc-telegram-bot/.env
 
       - run: |-
           gcloud config set compute/zone ${{ secrets.GCE_INSTANCE_ZONE }}
@@ -77,7 +77,7 @@ jobs:
           gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'mkdir -p ~/solar-system-info'
 
       - run: |-
-          gcloud compute scp --quiet ./solar-system-info/docker-compose.yml ./solar-system-info/.env ./.github/deploy.sh ${{ secrets.GCE_INSTANCE }}:~/solar-system-info/
+          gcloud compute scp --quiet ./grpc-telegram-bot/docker-compose.yml ./grpc-telegram-bot/.env ./.github/deploy.sh ${{ secrets.GCE_INSTANCE }}:~/solar-system-info/
 
       - run: |-
           gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'bash ~/solar-system-info/deploy.sh'
