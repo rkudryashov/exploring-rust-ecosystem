@@ -7,7 +7,7 @@ pub struct SolarSystemInfoBotError {
 }
 
 impl SolarSystemInfoBotError {
-    pub fn new(msg: &str) -> SolarSystemInfoBotError {
+    pub fn new(msg: &str) -> Self {
         SolarSystemInfoBotError {
             message: msg.to_string(),
         }

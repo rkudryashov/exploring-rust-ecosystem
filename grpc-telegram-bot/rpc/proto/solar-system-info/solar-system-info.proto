@@ -11,7 +11,7 @@ service SolarSystemInfo {
   rpc GetPlanets (google.protobuf.Empty) returns (stream PlanetResponse);
 }
 
-message PlanetsListResponse{
+message PlanetsListResponse {
   repeated string list = 1;
 }
 

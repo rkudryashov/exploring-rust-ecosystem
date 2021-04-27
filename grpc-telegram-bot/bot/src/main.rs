@@ -79,7 +79,7 @@ async fn answer(
             get_planets(grpc_client, ctx).await?;
         }
         Command::Planet(planet_name) => {
-            let response = get_planet(grpc_client, planet_name).await?;
+            let response = get_planet(grpc_client, String::from(planet_name.trim())).await?;
             ctx.answer_photo(response.0).caption(response.1).await?;
         }
     };
@@ -218,11 +218,11 @@ async fn get_planet(
 #[command(rename = "lowercase", description = "These commands are supported:")]
 enum Command {
     Start,
-    #[command(description = "shows this message")]
+    #[command(description = "show this message")]
     Help,
-    #[command(description = "shows list of planets")]
+    #[command(description = "show list of planets")]
     List,
-    #[command(description = "shows info about all planets")]
+    #[command(description = "show info about all planets")]
     Planets,
     #[command(
         description = "show info about specified planet (for example, enter <code>/planet neptune</code>)"
