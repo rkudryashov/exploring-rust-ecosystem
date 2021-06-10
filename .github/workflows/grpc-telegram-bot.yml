@@ -1,4 +1,4 @@
-name: CI/CD
+name: gRPC/Telegram bot CI/CD
 
 on:
   push:
@@ -61,9 +61,8 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup gcloud CLI
-        uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@master
         with:
-          version: '319.0.0'
           service_account_key: ${{ secrets.GCE_SA_KEY }}
           project_id: ${{ secrets.GCE_PROJECT }}
 
@@ -77,7 +76,7 @@ jobs:
           gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'mkdir -p ~/solar-system-info'
 
       - run: |-
-          gcloud compute scp --quiet ./grpc-telegram-bot/docker-compose.yml ./grpc-telegram-bot/.env ./.github/deploy.sh ${{ secrets.GCE_INSTANCE }}:~/solar-system-info/
+          gcloud compute scp --quiet ./grpc-telegram-bot/docker-compose.yml ./grpc-telegram-bot/.env ./.github/deploy-grpc-telegram-bot.sh ${{ secrets.GCE_INSTANCE }}:~/solar-system-info/
 
       - run: |-
-          gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'bash ~/solar-system-info/deploy.sh'
+          gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'bash ~/solar-system-info/deploy-grpc-telegram-bot.sh'

@@ -42,7 +42,7 @@ async fn main() -> std::io::Result<()> {
     let rate_limiting_service = Arc::new(RateLimitingService::new(redis_connection_manager));
 
     let enable_write_handlers = env::var("ENABLE_WRITE_HANDLERS")
-        .expect("MONGODB_URI env var should be specified")
+        .expect("ENABLE_WRITE_HANDLERS env var should be specified")
         .parse::<bool>()
         .expect("Can't parse ENABLE_WRITE_HANDLERS");
 

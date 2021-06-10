@@ -1,0 +1,51 @@
+name: MongoDB/Redis CI/CD
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  mongodb-redis-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/build-push-action@v1.1.2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: kudryashovroman/mongodb-redis
+          path: .
+          dockerfile: ./mongodb-redis/Dockerfile
+          tags: latest
+          push: ${{ github.event_name == 'push' }}
+
+  deploy:
+    if: ${{ github.event_name == 'push' }}
+    needs: [ mongodb-redis-image ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@master
+        with:
+          service_account_key: ${{ secrets.GCE_SA_KEY }}
+          project_id: ${{ secrets.GCE_PROJECT }}
+
+      - run: |-
+          gcloud config set compute/zone ${{ secrets.GCE_INSTANCE_ZONE }}
+
+      - run: |-
+          gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'mkdir -p ~/mongodb-redis'
+
+      - run: |-
+          gcloud compute scp --recurse --quiet ./mongodb-redis/docker-compose.yml ./mongodb-redis/.env ./mongodb-redis/mongodb-init ./.github/deploy-mongodb-redis.sh ${{ secrets.GCE_INSTANCE }}:~/mongodb-redis/
+
+      - run: |-
+          gcloud compute ssh ${{ secrets.GCE_INSTANCE }} --command 'bash ~/mongodb-redis/deploy-mongodb-redis.sh'

@@ -1,0 +1,10 @@
+# development configuration
+version: '3.8'
+services:
+
+  mongodb-redis:
+    build:
+      context: ..
+      dockerfile: ./mongodb-redis/Dockerfile
+    environment:
+      ENABLE_WRITE_HANDLERS: 'true'

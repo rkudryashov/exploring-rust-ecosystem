@@ -3,18 +3,17 @@ version: '3.8'
 services:
 
   mongodb-redis:
-    build:
-      context: ..
-      dockerfile: ./mongodb-redis/Dockerfile
+    image: kudryashovroman/mongodb-redis:latest
     container_name: mongodb-redis
     restart: always
     depends_on:
-      - mongo
+      - mongodb
       - redis
     environment:
-      MONGODB_URI: mongodb://admin:password@mongodb:27017
+      MONGODB_URI: mongodb://$MONGODB_USERNAME:$MONGODB_PASSWORD@mongodb:27017
       REDIS_URI: redis://redis
       RUST_LOG: debug
+      ENABLE_WRITE_HANDLERS: 'false'
     ports:
       - 9000:9000
 
@@ -33,7 +32,7 @@ services:
     image: mongo
     container_name: mongodb-seed
     depends_on:
-      - mongo
+      - mongodb
     volumes:
       - ./mongodb-init:/mongodb-init
     links:
