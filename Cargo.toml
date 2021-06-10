@@ -3,4 +3,6 @@ members = [
     "grpc-telegram-bot/rpc",
     "grpc-telegram-bot/server",
     "grpc-telegram-bot/bot",
+
+    "mongodb-redis"
 ]

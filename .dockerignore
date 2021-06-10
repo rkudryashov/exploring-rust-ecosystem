@@ -2,3 +2,6 @@
 
 /solar-system-info/*/Dockerfile
 /solar-system-info/*/.env
+
+/mongodb-redis/Dockerfile
+/mongodb-redis/.env

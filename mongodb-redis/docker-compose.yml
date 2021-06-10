@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+
+  mongodb-redis:
+    build:
+      context: ..
+      dockerfile: ./mongodb-redis/Dockerfile
+    container_name: mongodb-redis
+    restart: always
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      MONGODB_URI: mongodb://admin:password@mongodb:27017
+      REDIS_URI: redis://redis
+      RUST_LOG: debug
+    ports:
+      - 9000:9000
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: $MONGODB_USERNAME
+      MONGO_INITDB_ROOT_PASSWORD: $MONGODB_PASSWORD
+      MONGO_INITDB_DATABASE: solar_system_info
+    ports:
+      - 27017:27017
+
+  mongodb-seed:
+    image: mongo
+    container_name: mongodb-seed
+    depends_on:
+      - mongo
+    volumes:
+      - ./mongodb-init:/mongodb-init
+    links:
+      - mongodb
+    command:
+      mongoimport --host mongodb --db solar_system_info --collection planets --authenticationDatabase admin --username $MONGODB_USERNAME --password $MONGODB_PASSWORD --drop --jsonArray --file /mongodb-init/init.json
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - 6379:6379

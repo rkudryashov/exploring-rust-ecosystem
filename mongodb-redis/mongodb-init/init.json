@@ -1,0 +1,99 @@
+[
+  {
+    "name": "Mercury",
+    "type": "TerrestrialPlanet",
+    "mean_radius": 2439.7
+  },
+  {
+    "name": "Venus",
+    "type": "TerrestrialPlanet",
+    "mean_radius": 6051.8
+  },
+  {
+    "name": "Earth",
+    "type": "TerrestrialPlanet",
+    "mean_radius": 6371.0,
+    "satellites": [
+      {
+        "name": "Moon",
+        "first_spacecraft_landing_date": {
+          "$date": "1959-09-13T00:00:00Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Mars",
+    "type": "TerrestrialPlanet",
+    "mean_radius": 3389.5,
+    "satellites": [
+      {
+        "name": "Phobos"
+      },
+      {
+        "name": "Deimos"
+      }
+    ]
+  },
+  {
+    "name": "Jupiter",
+    "type": "GasGiant",
+    "mean_radius": 69911.0,
+    "satellites": [
+      {
+        "name": "Io"
+      },
+      {
+        "name": "Europa"
+      },
+      {
+        "name": "Ganymede"
+      },
+      {
+        "name": "Callisto"
+      }
+    ]
+  },
+  {
+    "name": "Saturn",
+    "type": "GasGiant",
+    "mean_radius": 58232.0,
+    "satellites": [
+      {
+        "name": "Titan"
+      }
+    ]
+  },
+  {
+    "name": "Uranus",
+    "type": "IceGiant",
+    "mean_radius": 25362.0,
+    "satellites": [
+      {
+        "name": "Ariel"
+      },
+      {
+        "name": "Umbriel"
+      },
+      {
+        "name": "Titania"
+      },
+      {
+        "name": "Oberon"
+      },
+      {
+        "name": "Miranda"
+      }
+    ]
+  },
+  {
+    "name": "Neptune",
+    "type": "IceGiant",
+    "mean_radius": 24622.0,
+    "satellites": [
+      {
+        "name": "Triton"
+      }
+    ]
+  }
+]
