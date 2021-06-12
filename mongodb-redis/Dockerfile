@@ -1,4 +1,4 @@
-FROM rust:1.52.1
+FROM rust:1.53
 
 ENV CARGO_TERM_COLOR always
 

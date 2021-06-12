@@ -2,13 +2,13 @@ use actix_web::body::Body;
 use actix_web::error::ResponseError;
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
-use actix_web::BaseHttpResponse;
-use derive_more::Display;
+use actix_web::HttpResponse;
+use derive_more::{Display, Error};
 use log::error;
 use redis::RedisError;
 use serde::Serialize;
 
-#[derive(Debug, Display)]
+#[derive(Debug, Display, Error)]
 pub enum CustomError {
     #[display(fmt = message)]
     MongoDbError {
@@ -65,7 +65,7 @@ impl ResponseError for CustomError {
         }
     }
 
-    fn error_response(&self) -> BaseHttpResponse<Body> {
+    fn error_response(&self) -> HttpResponse<Body> {
         error!("Error: {}", self.to_string());
 
         let error_response = ErrorResponse {
@@ -73,7 +73,7 @@ impl ResponseError for CustomError {
             message: self.to_string(),
         };
 
-        BaseHttpResponse::build(self.status_code())
+        HttpResponse::build(self.status_code())
             .content_type(ContentType::json())
             .body(error_response)
     }
