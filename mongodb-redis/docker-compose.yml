@@ -18,7 +18,7 @@ services:
       - 9000:9000
 
   mongodb:
-    image: mongo
+    image: mongo:5.0.0-rc2
     container_name: mongodb
     restart: always
     environment:
@@ -29,7 +29,7 @@ services:
       - 27017:27017
 
   mongodb-seed:
-    image: mongo
+    image: mongo:5.0.0-rc2
     container_name: mongodb-seed
     depends_on:
       - mongodb
