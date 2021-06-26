@@ -1,1 +1,10 @@
 = Exploring Rust ecosystem
+
+A set of examples that demonstrate how to create a backend application using Rust ecosystem:
+
+* https://github.com/rkudryashov/exploring-rust-ecosystem/tree/master/grpc-telegram-bot[gRPC + Telegram bot]
++
+image:https://github.com/rkudryashov/exploring-rust-ecosystem/actions/workflows/grpc-telegram-bot.yml/badge.svg[CI/CD,link=https://github.com/rkudryashov/exploring-rust-ecosystem/actions]
+* https://github.com/rkudryashov/exploring-rust-ecosystem/tree/master/mongodb-redis[MongoDB + Redis]
++
+image:https://github.com/rkudryashov/exploring-rust-ecosystem/actions/workflows/mongodb-redis.yml/badge.svg[CI/CD,link=https://github.com/rkudryashov/exploring-rust-ecosystem/actions]
