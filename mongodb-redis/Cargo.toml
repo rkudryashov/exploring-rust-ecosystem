@@ -7,14 +7,14 @@ edition = "2018"
 [dependencies]
 mongodb = "2.0.0-beta.2"
 redis = { version = "0.20.2", features = ["tokio-comp", "connection-manager"] }
-actix-web = "4.0.0-beta.7"
-tokio = "1.7.1"
-tokio-stream = "0.1.6"
+actix-web = "4.0.0-beta.8"
+tokio = "1.8.1"
+tokio-stream = "0.1.7"
 chrono = { version = "0.4.19", features = ["serde"] }
 serde = "1.0.126"
 serde_json = "1.0.64"
 dotenv = "0.15.0"
-derive_more = "0.99.14"
+derive_more = "0.99.16"
 log = "0.4.14"
 env_logger = "0.8.4"
 rust-embed = "5.9.0"
