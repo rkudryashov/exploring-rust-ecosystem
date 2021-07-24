@@ -72,7 +72,14 @@ impl PlanetService {
                     .mongodb_client
                     .get_planet(ObjectId::from_str(planet_id)?)
                     .await?;
-                let _: () = con.set(&cache_key, &result).await?;
+
+                let _: () = redis::pipe()
+                    .atomic()
+                    .set(&cache_key, &result)
+                    .expire(&cache_key, 60)
+                    .query_async(&mut con)
+                    .await?;
+
                 Ok(result)
             }
             Value::Data(val) => {
@@ -128,9 +135,14 @@ impl PlanetService {
                     .get_planet(ObjectId::from_str(planet_id)?)
                     .await?;
                 let result = crate::db::get_image_of_planet(&planet.name).await;
-                let _: () = redis_connection_manager
+
+                let _: () = redis::pipe()
+                    .atomic()
                     .set(&cache_key, result.clone())
+                    .expire(&cache_key, 60)
+                    .query_async(&mut redis_connection_manager)
                     .await?;
+
                 Ok(result)
             }
             Value::Data(val) => {
@@ -206,7 +218,6 @@ impl RateLimitingService {
             .atomic()
             .incr(&rate_limit_key, 1)
             .expire(&rate_limit_key, 60)
-            .ignore()
             .query_async(&mut self.redis_connection_manager.clone())
             .await?;
 
