@@ -5,14 +5,14 @@ use chrono::{Timelike, Utc};
 use log::debug;
 use mongodb::bson::oid::ObjectId;
 use redis::aio::ConnectionManager;
-use redis::{AsyncCommands, Client, FromRedisValue};
+use redis::{AsyncCommands, Client, FromRedisValue, Value};
 use tokio::sync::mpsc::{self, Receiver};
 use tokio_stream::StreamExt;
 
 use crate::db::MongoDbClient;
 use crate::dto::PlanetMessage;
 use crate::errors::CustomError;
-use crate::errors::CustomError::TooManyRequests;
+use crate::errors::CustomError::{RedisError, TooManyRequests};
 use crate::model::{Planet, PlanetType};
 
 const PLANET_KEY_PREFIX: &str = "planet";
@@ -63,24 +63,26 @@ impl PlanetService {
     pub async fn get_planet(&self, planet_id: &str) -> Result<Planet, CustomError> {
         let cache_key = self.get_planet_cache_key(planet_id);
         let mut con = self.redis_client.get_async_connection().await?;
-        let cache_is_empty: bool = !con.exists(&cache_key).await?;
 
-        let planet = if cache_is_empty {
-            debug!("Use database to retrieve a planet by id: {}", &planet_id);
-            let result: Planet = self
-                .mongodb_client
-                .get_planet(ObjectId::from_str(planet_id)?)
-                .await?;
-            let _: () = con.set(&cache_key, &result).await?;
-            result
-        } else {
-            debug!("Use cache to retrieve a planet by id: {}", planet_id);
-            let cached_value = con.get(&cache_key).await?;
-            let planet_string: String = FromRedisValue::from_redis_value(&cached_value)?;
-            serde_json::from_str(&planet_string)?
-        };
-
-        Ok(planet)
+        let cached_planet = con.get(&cache_key).await?;
+        match cached_planet {
+            Value::Nil => {
+                debug!("Use database to retrieve a planet by id: {}", &planet_id);
+                let result: Planet = self
+                    .mongodb_client
+                    .get_planet(ObjectId::from_str(planet_id)?)
+                    .await?;
+                let _: () = con.set(&cache_key, &result).await?;
+                Ok(result)
+            }
+            Value::Data(val) => {
+                debug!("Use cache to retrieve a planet by id: {}", planet_id);
+                Ok(serde_json::from_slice(&val)?)
+            }
+            _ => Err(RedisError {
+                message: "Unexpected response from Redis".to_string(),
+            }),
+        }
     }
 
     pub async fn update_planet(
@@ -113,31 +115,35 @@ impl PlanetService {
     pub async fn get_image_of_planet(&self, planet_id: &str) -> Result<Vec<u8>, CustomError> {
         let cache_key = self.get_image_cache_key(planet_id);
         let mut redis_connection_manager = self.redis_connection_manager.clone();
-        let cache_is_empty: bool = !redis_connection_manager.exists(&cache_key).await?;
 
-        let image: Vec<u8> = if cache_is_empty {
-            debug!(
-                "Use database to retrieve an image of a planet by id: {}",
-                &planet_id
-            );
-            let planet = self
-                .mongodb_client
-                .get_planet(ObjectId::from_str(planet_id)?)
-                .await?;
-            let result = crate::db::get_image_of_planet(&planet.name).await;
-            let _: () = redis_connection_manager
-                .set(&cache_key, result.clone())
-                .await?;
-            result
-        } else {
-            debug!(
-                "Use cache to retrieve an image of a planet by id: {}",
-                &planet_id
-            );
-            redis_connection_manager.get(&cache_key).await?
-        };
-
-        Ok(image)
+        let cached_image = redis_connection_manager.get(&cache_key).await?;
+        match cached_image {
+            Value::Nil => {
+                debug!(
+                    "Use database to retrieve an image of a planet by id: {}",
+                    &planet_id
+                );
+                let planet = self
+                    .mongodb_client
+                    .get_planet(ObjectId::from_str(planet_id)?)
+                    .await?;
+                let result = crate::db::get_image_of_planet(&planet.name).await;
+                let _: () = redis_connection_manager
+                    .set(&cache_key, result.clone())
+                    .await?;
+                Ok(result)
+            }
+            Value::Data(val) => {
+                debug!(
+                    "Use cache to retrieve an image of a planet by id: {}",
+                    &planet_id
+                );
+                Ok(val)
+            }
+            _ => Err(RedisError {
+                message: "Unexpected response from Redis".to_string(),
+            }),
+        }
     }
 
     pub async fn get_new_planets_stream(
