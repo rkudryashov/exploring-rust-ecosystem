@@ -8,7 +8,7 @@ alias docker-compose='docker run --rm \
 
 cd ~/mongodb-redis
 
+docker system prune
 docker-compose pull
 docker-compose down
-docker system prune
 docker-compose up -d

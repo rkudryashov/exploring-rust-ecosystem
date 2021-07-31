@@ -8,7 +8,7 @@ alias docker-compose='docker run --rm \
 
 cd ~/solar-system-info
 
+docker system prune
 docker-compose pull
 docker-compose down
-docker system prune
 docker-compose up -d

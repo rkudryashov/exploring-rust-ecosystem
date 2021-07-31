@@ -28,7 +28,7 @@ impl From<PlanetWrapper> for GrpcPlanet {
             mean_radius: planet.mean_radius.to_f32().expect("Can't convert to f32"),
             mass: planet.mass.to_f32().expect("Can't convert mass"),
             satellites: pw.satellites.into_iter().map(|s| s.into()).collect(),
-            image: image.to_vec(),
+            image: image.data.to_vec(),
         }
     }
 }

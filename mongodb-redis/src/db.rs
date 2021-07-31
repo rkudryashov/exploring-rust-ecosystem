@@ -100,7 +100,7 @@ impl MongoDbClient {
 pub async fn get_image_of_planet(planet_name: &str) -> Vec<u8> {
     let filename = format!("{}.jpg", planet_name.to_lowercase());
     let image = Asset::get(&filename).expect("Failed to open image");
-    image.to_vec()
+    image.data.to_vec()
 }
 
 #[derive(RustEmbed)]
