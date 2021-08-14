@@ -214,7 +214,7 @@ impl RateLimitingService {
         let current_minute = Utc::now().minute();
         let rate_limit_key = format!("{}:{}:{}", RATE_LIMIT_KEY_PREFIX, ip_addr, current_minute);
 
-        let (count,): (u64,) = redis::pipe()
+        let (count, _): (u64, u64) = redis::pipe()
             .atomic()
             .incr(&rate_limit_key, 1)
             .expire(&rate_limit_key, 60)
