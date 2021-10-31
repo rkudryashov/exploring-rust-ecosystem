@@ -5,9 +5,9 @@ authors = ["Roman Kudryashov <rskudryashov@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-tonic = "0.5.2"
-prost = "0.8.0"
-prost-types = "0.8.0"
+tonic = "0.6.1"
+prost = "0.9.0"
+prost-types = "0.9.0"
 
 [build-dependencies]
-tonic-build = "0.5.2"
+tonic-build = "0.6.0"

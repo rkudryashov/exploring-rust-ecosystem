@@ -6,9 +6,9 @@ edition = "2018"
 
 [dependencies]
 solar-system-info-rpc = { path = "../rpc" }
-teloxide = { version = "0.5.2", features = ["macros", "auto-send"] }
-tonic = "0.5.2"
-tokio = { version = "1.12.0", features = ["rt-multi-thread", "macros"] }
+teloxide = { version = "0.5.3", features = ["macros", "auto-send"] }
+tonic = "0.6.1"
+tokio = { version = "1.13.0", features = ["rt-multi-thread", "macros"] }
 futures = "0.3.17"
 indoc = "1.0.3"
 chrono = { version = "0.4.19", features = ["serde"] }
@@ -16,4 +16,4 @@ lazy_static = "1.4.0"
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
 dotenv = "0.15.0"
-reqwest = "0.11.5"
+reqwest = "0.11.6"
