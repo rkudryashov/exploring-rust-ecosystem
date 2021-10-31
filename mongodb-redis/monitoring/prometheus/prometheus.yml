@@ -1,0 +1,20 @@
+scrape_configs:
+
+  - job_name: mongodb_redis_web_app
+    scrape_interval: 5s
+    static_configs:
+      # if this is not working when you're running the application in a container (not on a host machine) try to use 'mongodb-redis:9000'
+      - targets: ['host.docker.internal:9000']
+
+  - job_name: cadvisor
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+rule_files:
+  - 'rules.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']

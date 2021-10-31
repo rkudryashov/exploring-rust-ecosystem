@@ -1,13 +1,10 @@
 use std::str::FromStr;
 
-use actix_web::web::Bytes;
 use chrono::{Timelike, Utc};
 use log::debug;
 use mongodb::bson::oid::ObjectId;
 use redis::aio::ConnectionManager;
-use redis::{AsyncCommands, Client, FromRedisValue, Value};
-use tokio::sync::mpsc::{self, Receiver};
-use tokio_stream::StreamExt;
+use redis::{AsyncCommands, Client, Value};
 
 use crate::db::MongoDbClient;
 use crate::dto::PlanetMessage;
@@ -19,7 +16,7 @@ const PLANET_KEY_PREFIX: &str = "planet";
 const IMAGE_KEY_PREFIX: &str = "image";
 const RATE_LIMIT_KEY_PREFIX: &str = "rate_limit";
 const MAX_REQUESTS_PER_MINUTE: u64 = 10;
-const NEW_PLANETS_CHANNEL_NAME: &str = "new_planets";
+pub const NEW_PLANETS_CHANNEL_NAME: &str = "new_planets";
 
 #[derive(Clone)]
 pub struct PlanetService {
@@ -156,37 +153,6 @@ impl PlanetService {
                 message: "Unexpected response from Redis".to_string(),
             }),
         }
-    }
-
-    pub async fn get_new_planets_stream(
-        &self,
-    ) -> Result<Receiver<Result<Bytes, CustomError>>, CustomError> {
-        let (tx, rx) = mpsc::channel::<Result<Bytes, CustomError>>(100);
-
-        tx.send(Ok(Bytes::from("data: Connected\n\n")))
-            .await
-            .expect("Can't send a message to the stream");
-
-        let mut pubsub_con = self
-            .redis_client
-            .get_async_connection()
-            .await?
-            .into_pubsub();
-        pubsub_con.subscribe(NEW_PLANETS_CHANNEL_NAME).await?;
-
-        tokio::spawn(async move {
-            while let Some(msg) = pubsub_con.on_message().next().await {
-                let payload = msg.get_payload().expect("Can't get payload of message");
-                let payload: String = FromRedisValue::from_redis_value(&payload)
-                    .expect("Can't convert from Redis value");
-                let msg = Bytes::from(format!("data: Planet created: {:?}\n\n", payload));
-                tx.send(Ok(msg))
-                    .await
-                    .expect("Can't send a message to the stream");
-            }
-        });
-
-        Ok(rx)
     }
 
     fn get_planet_cache_key(&self, planet_id: &str) -> String {

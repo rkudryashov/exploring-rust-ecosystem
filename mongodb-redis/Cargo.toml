@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 mongodb = "2.0.1"
-redis = { version = "0.21.3", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "0.21.4", features = ["tokio-comp", "connection-manager"] }
 actix-web = "4.0.0-beta.10"
 tokio = "1.13.0"
 tokio-stream = "0.1.8"
@@ -19,3 +19,5 @@ log = "0.4.14"
 env_logger = "0.9.0"
 rust-embed = "6.2.0"
 mime = "0.3.16"
+prometheus = { version = "0.13.0", features = ["process"] }
+lazy_static = "1.4.0"

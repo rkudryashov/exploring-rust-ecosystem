@@ -2,9 +2,15 @@ FROM rust:1.56
 
 ENV CARGO_TERM_COLOR always
 
-WORKDIR /usr/src/app/docker-build
+# create empty project for caching dependencies
+RUN USER=root cargo new --bin /mongodb-redis/docker-build
+WORKDIR /mongodb-redis/docker-build
 COPY /Cargo.lock ./
+COPY /mongodb-redis/Cargo.toml ./
+# cache dependencies
+RUN cargo install --path . --locked
 COPY /mongodb-redis/ ./
+RUN touch ./src/main.rs
 RUN cargo install --path . --locked
 
 FROM debian:buster-slim

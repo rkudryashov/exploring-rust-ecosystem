@@ -1,13 +1,15 @@
-use std::sync::Arc;
+use actix_web::http::header::{self, ContentType};
+use actix_web::http::StatusCode;
+use actix_web::{web, HttpRequest, HttpResponse};
+use prometheus::{Encoder, TextEncoder};
+use serde::Deserialize;
 
+use crate::broadcaster::Broadcaster;
 use crate::dto::PlanetDto;
 use crate::errors::CustomError;
 use crate::model::PlanetType;
 use crate::services::{PlanetService, RateLimitingService};
-use actix_web::http::header::{self, ContentType};
-use actix_web::http::StatusCode;
-use actix_web::{web, HttpRequest, HttpResponse};
-use serde::Deserialize;
+use std::sync::Mutex;
 
 #[derive(Debug, Deserialize)]
 pub struct GetPlanetsQueryParams {
@@ -17,8 +19,8 @@ pub struct GetPlanetsQueryParams {
 pub async fn get_planets(
     req: HttpRequest,
     web::Query(query_params): web::Query<GetPlanetsQueryParams>,
-    rate_limit_service: web::Data<Arc<RateLimitingService>>,
-    planet_service: web::Data<Arc<PlanetService>>,
+    rate_limit_service: web::Data<RateLimitingService>,
+    planet_service: web::Data<PlanetService>,
 ) -> Result<HttpResponse, CustomError> {
     // can be moved to actix middleware
     rate_limit_service
@@ -31,7 +33,7 @@ pub async fn get_planets(
 
 pub async fn create_planet(
     planet_dto: web::Json<PlanetDto>,
-    planet_service: web::Data<Arc<PlanetService>>,
+    planet_service: web::Data<PlanetService>,
 ) -> Result<HttpResponse, CustomError> {
     let planet = planet_service
         .create_planet(planet_dto.into_inner().into())
@@ -42,7 +44,7 @@ pub async fn create_planet(
 
 pub async fn get_planet(
     planet_id: web::Path<String>,
-    planet_service: web::Data<Arc<PlanetService>>,
+    planet_service: web::Data<PlanetService>,
 ) -> Result<HttpResponse, CustomError> {
     let planet = planet_service.get_planet(&planet_id.into_inner()).await?;
     Ok(HttpResponse::Ok().json(PlanetDto::from(planet)))
@@ -51,7 +53,7 @@ pub async fn get_planet(
 pub async fn update_planet(
     planet_id: web::Path<String>,
     planet_dto: web::Json<PlanetDto>,
-    planet_service: web::Data<Arc<PlanetService>>,
+    planet_service: web::Data<PlanetService>,
 ) -> Result<HttpResponse, CustomError> {
     let planet = planet_service
         .update_planet(&planet_id.into_inner(), planet_dto.into_inner().into())
@@ -62,7 +64,7 @@ pub async fn update_planet(
 
 pub async fn delete_planet(
     planet_id: web::Path<String>,
-    planet_service: web::Data<Arc<PlanetService>>,
+    planet_service: web::Data<PlanetService>,
 ) -> Result<HttpResponse, CustomError> {
     planet_service
         .delete_planet(&planet_id.into_inner())
@@ -73,7 +75,7 @@ pub async fn delete_planet(
 
 pub async fn get_image_of_planet(
     planet_id: web::Path<String>,
-    planet_service: web::Data<Arc<PlanetService>>,
+    planet_service: web::Data<PlanetService>,
 ) -> Result<HttpResponse, CustomError> {
     let image = planet_service
         .get_image_of_planet(&planet_id.into_inner())
@@ -84,11 +86,13 @@ pub async fn get_image_of_planet(
         .body(image))
 }
 
-pub async fn sse(
-    planet_service: web::Data<Arc<PlanetService>>,
-) -> Result<HttpResponse, CustomError> {
-    let new_planets_stream = planet_service.get_new_planets_stream().await?;
-    let response_stream = tokio_stream::wrappers::ReceiverStream::new(new_planets_stream);
+pub async fn sse(broadcaster: web::Data<Mutex<Broadcaster>>) -> Result<HttpResponse, CustomError> {
+    let rx = broadcaster
+        .lock()
+        .expect("Can't lock broadcaster")
+        .new_client()
+        .await;
+    let response_stream = tokio_stream::wrappers::ReceiverStream::new(rx);
 
     Ok(HttpResponse::build(StatusCode::OK)
         .insert_header(header::ContentType(mime::TEXT_EVENT_STREAM))
@@ -101,6 +105,21 @@ pub async fn index() -> Result<HttpResponse, CustomError> {
     Ok(HttpResponse::Ok()
         .insert_header(header::ContentType(mime::TEXT_HTML))
         .body(content))
+}
+
+pub async fn metrics() -> Result<HttpResponse, CustomError> {
+    let encoder = TextEncoder::new();
+    let mut buffer = vec![];
+    encoder
+        .encode(&prometheus::gather(), &mut buffer)
+        .expect("Failed to encode metrics");
+
+    let response = String::from_utf8(buffer.clone()).expect("Failed to convert bytes to string");
+    buffer.clear();
+
+    Ok(HttpResponse::Ok()
+        .insert_header(header::ContentType(mime::TEXT_PLAIN))
+        .body(response))
 }
 
 fn get_ip_addr(req: &HttpRequest) -> Result<String, CustomError> {

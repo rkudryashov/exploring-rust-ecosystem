@@ -1,16 +1,20 @@
 use std::env;
-use std::sync::Arc;
 
+use actix_web::dev::Service;
+use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use log::info;
 
+use crate::broadcaster::Broadcaster;
 use crate::db::MongoDbClient;
 use crate::services::{PlanetService, RateLimitingService};
 
+mod broadcaster;
 mod db;
 mod dto;
 mod errors;
 mod handlers;
+mod metrics;
 mod model;
 mod redis;
 mod services;
@@ -34,20 +38,45 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("Can't create Redis connection manager");
 
-    let planet_service = Arc::new(PlanetService::new(
+    let broadcaster = Broadcaster::create();
+
+    redis::start_pubsub(&redis_client, broadcaster.clone())
+        .await
+        .expect("Can't start Redis Pub/Sub");
+
+    let planet_service = Data::new(PlanetService::new(
         mongodb_client,
         redis_client,
         redis_connection_manager.clone(),
     ));
-    let rate_limiting_service = Arc::new(RateLimitingService::new(redis_connection_manager));
 
-    let enable_write_handlers = env::var("ENABLE_WRITE_HANDLERS")
-        .expect("ENABLE_WRITE_HANDLERS env var should be specified")
+    let rate_limiting_service = Data::new(RateLimitingService::new(redis_connection_manager));
+
+    let enable_writing_handlers = env::var("ENABLE_WRITING_HANDLERS")
+        .expect("ENABLE_WRITING_HANDLERS env var should be specified")
         .parse::<bool>()
-        .expect("Can't parse ENABLE_WRITE_HANDLERS");
+        .expect("Can't parse ENABLE_WRITING_HANDLERS");
 
     HttpServer::new(move || {
         let mut app = App::new()
+            .wrap_fn(|req, srv| {
+                let request_method = req.method().to_string();
+                let request_path = req.path();
+                let histogram_timer = metrics::HTTP_RESPONSE_TIME_SECONDS
+                    .with_label_values(&[&request_method, request_path])
+                    .start_timer();
+                metrics::HTTP_REQUESTS_TOTAL
+                    .with_label_values(&[&request_method, request_path])
+                    .inc();
+
+                let fut = srv.call(req);
+
+                async {
+                    let res = fut.await?;
+                    histogram_timer.observe_duration();
+                    Ok(res)
+                }
+            })
             .route("/planets", web::get().to(handlers::get_planets))
             .route("/planets/{planet_id}", web::get().to(handlers::get_planet))
             .route(
@@ -56,10 +85,12 @@ async fn main() -> std::io::Result<()> {
             )
             .route("/events", web::get().to(handlers::sse))
             .route("/", web::get().to(handlers::index))
-            .data(Arc::clone(&planet_service))
-            .data(Arc::clone(&rate_limiting_service));
+            .route("/metrics", web::get().to(handlers::metrics))
+            .app_data(planet_service.clone())
+            .app_data(rate_limiting_service.clone())
+            .app_data(broadcaster.clone());
 
-        if enable_write_handlers {
+        if enable_writing_handlers {
             app = app
                 .route("/planets", web::post().to(handlers::create_planet))
                 .route(

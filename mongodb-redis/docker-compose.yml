@@ -13,9 +13,9 @@ services:
       MONGODB_URI: mongodb://$MONGODB_USERNAME:$MONGODB_PASSWORD@mongodb:27017
       REDIS_URI: redis://redis
       RUST_LOG: debug
-      ENABLE_WRITE_HANDLERS: 'false'
+      ENABLE_WRITING_HANDLERS: 'false'
     ports:
-      - 9000:9000
+      - '9000:9000'
 
   mongodb:
     image: mongo:5
@@ -26,7 +26,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: $MONGODB_PASSWORD
       MONGO_INITDB_DATABASE: solar_system_info
     ports:
-      - 27017:27017
+      - '27017:27017'
 
   mongodb-seed:
     image: mongo:5
@@ -43,5 +43,6 @@ services:
   redis:
     image: redis:alpine
     container_name: redis
+    restart: always
     ports:
-      - 6379:6379
+      - '6379:6379'

@@ -1,4 +1,4 @@
-# development configuration
+# development configuration + services for monitoring
 version: '3.8'
 services:
 
@@ -7,4 +7,54 @@ services:
       context: ..
       dockerfile: ./mongodb-redis/Dockerfile
     environment:
-      ENABLE_WRITE_HANDLERS: 'true'
+      ENABLE_WRITING_HANDLERS: 'true'
+
+  # services for monitoring
+  # comment services below if you don't need monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.external-url=http://localhost:9090'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./monitoring/grafana/data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    ports:
+      - '9093:9093'
+    volumes:
+      - ./monitoring/alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--web.external-url=http://localhost:9093'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: always
+    ports:
+      - '8080:8080'
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
