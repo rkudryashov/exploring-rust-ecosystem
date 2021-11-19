@@ -8,6 +8,7 @@ use log::info;
 use crate::broadcaster::Broadcaster;
 use crate::db::MongoDbClient;
 use crate::services::{PlanetService, RateLimitingService};
+use prometheus::HistogramTimer;
 
 mod broadcaster;
 mod db;
@@ -60,20 +61,31 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         let mut app = App::new()
             .wrap_fn(|req, srv| {
-                let request_method = req.method().to_string();
+                let mut histogram_timer: Option<HistogramTimer> = None;
                 let request_path = req.path();
-                let histogram_timer = metrics::HTTP_RESPONSE_TIME_SECONDS
-                    .with_label_values(&[&request_method, request_path])
-                    .start_timer();
-                metrics::HTTP_REQUESTS_TOTAL
-                    .with_label_values(&[&request_method, request_path])
-                    .inc();
+                let is_registered_resource = req.resource_map().has_resource(request_path);
+                // this check prevents possible DoS attacks that can be done by flooding the application
+                // using requests to different unregistered paths. That can cause high memory consumption
+                // of the application and Prometheus server and also overflow Prometheus's TSDB
+                if is_registered_resource {
+                    let request_method = req.method().to_string();
+                    histogram_timer = Some(
+                        metrics::HTTP_RESPONSE_TIME_SECONDS
+                            .with_label_values(&[&request_method, request_path])
+                            .start_timer(),
+                    );
+                    metrics::HTTP_REQUESTS_TOTAL
+                        .with_label_values(&[&request_method, request_path])
+                        .inc();
+                }
 
                 let fut = srv.call(req);
 
                 async {
                     let res = fut.await?;
-                    histogram_timer.observe_duration();
+                    if let Some(histogram_timer) = histogram_timer {
+                        histogram_timer.observe_duration();
+                    };
                     Ok(res)
                 }
             })
