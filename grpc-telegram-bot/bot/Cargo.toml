@@ -2,13 +2,13 @@
 name = "solar-system-info-bot"
 version = "0.1.0"
 authors = ["Roman Kudryashov <rskudryashov@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 solar-system-info-rpc = { path = "../rpc" }
 teloxide = { version = "0.5.3", features = ["macros", "auto-send"] }
 tonic = "0.6.1"
-tokio = { version = "1.13.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.14.0", features = ["rt-multi-thread", "macros"] }
 futures = "0.3.17"
 indoc = "1.0.3"
 chrono = { version = "0.4.19", features = ["serde"] }
