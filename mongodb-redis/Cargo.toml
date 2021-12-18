@@ -5,19 +5,19 @@ authors = ["Roman Kudryashov <rskudryashov@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-mongodb = "2.0.2"
+mongodb = "2.1.0"
 redis = { version = "0.21.4", features = ["tokio-comp", "connection-manager"] }
-actix-web = "4.0.0-beta.11"
-tokio = "1.14.0"
+actix-web = "4.0.0-beta.15"
+tokio = "1.15.0"
 tokio-stream = "0.1.8"
 chrono = { version = "0.4.19", features = ["serde"] }
-serde = "1.0.130"
-serde_json = "1.0.71"
+serde = "1.0.132"
+serde_json = "1.0.73"
 dotenv = "0.15.0"
-derive_more = "0.99.16"
+derive_more = "0.99.17"
 log = "0.4.14"
 env_logger = "0.9.0"
-rust-embed = "6.2.0"
+rust-embed = "6.3.0"
 mime = "0.3.16"
 prometheus = { version = "0.13.0", features = ["process"] }
 lazy_static = "1.4.0"

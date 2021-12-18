@@ -1,8 +1,7 @@
-use actix_web::body::Body;
 use actix_web::error::ResponseError;
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
-use actix_web::HttpResponse;
+use actix_web::{HttpResponse, HttpResponseBuilder};
 use derive_more::{Display, Error};
 use log::error;
 use redis::RedisError;
@@ -53,19 +52,19 @@ impl CustomError {
 
 impl ResponseError for CustomError {
     fn status_code(&self) -> StatusCode {
-        match self {
-            Self::MongoDbError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::RedisError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::NotFound { message: _ } => StatusCode::NOT_FOUND,
-            Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::TooManyRequests {
+        match *self {
+            CustomError::MongoDbError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::RedisError { message: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::NotFound { message: _ } => StatusCode::NOT_FOUND,
+            CustomError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::TooManyRequests {
                 actual_count: _,
                 permitted_count: _,
             } => StatusCode::TOO_MANY_REQUESTS,
         }
     }
 
-    fn error_response(&self) -> HttpResponse<Body> {
+    fn error_response(&self) -> HttpResponse {
         error!("Error: {}", self.to_string());
 
         let error_response = ErrorResponse {
@@ -73,15 +72,9 @@ impl ResponseError for CustomError {
             message: self.to_string(),
         };
 
-        HttpResponse::build(self.status_code())
+        HttpResponseBuilder::new(self.status_code())
             .content_type(ContentType::json())
-            .body(error_response)
-    }
-}
-
-impl From<ErrorResponse> for Body {
-    fn from(source: ErrorResponse) -> Self {
-        Body::from(serde_json::to_string(&source).expect("Can't serialize error response"))
+            .body(serde_json::to_string(&error_response).expect("Can't serialize error response"))
     }
 }
 

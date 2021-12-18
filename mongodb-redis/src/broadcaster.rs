@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use actix_web::web::{Bytes, Data};
 use tokio::sync::mpsc::{self, Receiver, Sender};
-use tokio::{task, time};
+use tokio::time;
 
 use crate::errors::CustomError;
 
@@ -50,7 +50,7 @@ impl Broadcaster {
     }
 
     fn spawn_ping(me: Data<Mutex<Self>>) {
-        task::spawn(async move {
+        tokio::spawn(async move {
             let mut interval = time::interval(Duration::from_secs(10));
 
             loop {
